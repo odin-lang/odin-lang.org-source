@@ -1773,6 +1773,66 @@ f: Foo(T, N);
 #assert(size_of(f) == (N+N-2)*size_of(T));
 ```
 
+## Custom iterator procedures
+
+Custom iterator procedure can be used to iterate over anything you want.
+
+It is customary for a custom iterator procedure to have a pointer to a value in order to keep track of the state of the iteration.
+
+Custom iterators can return 1, 2, or 3 values, as long as the last value is a boolean.
+
+In the 3 value variant the return values should be: 
+1. The next value to be given to the loop, 
+2. the next index for the loop, 
+3. boolean to signify if the loop should keep running.
+
+```odin
+//Iterate a linked list
+Node :: struct {
+    value: int,
+    next: ^Node
+}
+
+MyIterator :: struct {
+  index: int,
+  current: Node
+}
+//The custom iterator procedure can be named anything.
+custom_iterator_function :: proc(it: ^MyIterator) -> (value: Node, index: int, ok: bool) {
+    value = it.current;
+    index = it.index;
+    if value.next != nil {
+      it.current = it.current.next;
+      ok = true;
+      it.index += 1;
+    }
+    return;
+}
+
+main :: proc () {
+    head : Node = {value=10, next=nil};
+    tail : Node = {value=10, next=nil};
+    
+    head.next = tail;
+    
+    it : MyIterator = {index = 0; current=head};
+    
+    for node in custom_iterator_function(&it) {
+      fmt.println(node);
+    }
+}
+```
+
+Using the above custom iterator is equivalent to:
+
+```
+it := make_iterator();
+for {
+    value, index, keep_going := my_custom_iterator(&it);
+    if !keep_going do break;
+}
+```
+
 ## Useful idioms
 
 The following are useful idioms which are emergent from the semantics on the language.
